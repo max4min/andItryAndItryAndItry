@@ -25,9 +25,9 @@
         }
 
         .tab-pane {
-            border: 1px solid #dee2e6;
+            border: 1px solid #ffffff;
             padding: 1rem;
-            background-color: white;
+            background-color: #ffffff;
         }
 
         .mt-4 {
@@ -40,7 +40,9 @@
     </style>
 </head>
 <body>
+
 <!-- хедер -->
+
 <nav class="navbar navbar-dark bg-dark">
     <div class="container-fluid">
         <span class="navbar-text text-light">
@@ -161,8 +163,8 @@
                             <label for="role" class="form-label" style="font-weight: bold;">Role</label>
                             <select class="form-select w-25 mx-auto" id="role" name="roles" multiple>
                                 <option th:each="role : ${allRoles}"
-                                        th:value="${role.name}"
-                                        th:text="${role.name.replace('ROLE_', '')}">
+                                        th:value="${role}"
+                                        th:text="${role.name}">
 
                                 </option>
                             </select>
@@ -204,10 +206,15 @@
                     </div>
                     <div class="mb-3">
                         <label for="editRoles" class="form-label fw-bold">Roles</label>
+
+                        <!-- DEBUG -->
+                        <div th:text="'DEBUG: role=' + ${role}"></div>
+                        <div th:text="'DEBUG: role.name=' + ${role?.name}"></div>
+                        <!-- DEBUG -->
                         <select class="form-select" id="editRoles" name="roles" multiple>
                             <option th:each="role : ${allRoles}"
                                     th:value="${role.name}"
-                                    th:text="${role.name.replace('ROLE_', '')}"></option>
+                                    th:text="${role?.name?.replace('ROLE_', '')?: 'N/A'}"></option>
                         </select>
                     </div>
                 </form>

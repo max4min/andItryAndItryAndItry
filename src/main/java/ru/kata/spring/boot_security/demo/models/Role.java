@@ -16,7 +16,6 @@ public class Role {
     private Long id;
 
     @Column(name = "name", nullable = false, unique = true)
-    @NotNull
     private String name;
 
     // Many-to-many relationship with User
@@ -39,7 +38,7 @@ public class Role {
         this.id = id;
     }
 
-    public @NotNull String getName() {
+    public String getName() {
         return name;
     }
 
