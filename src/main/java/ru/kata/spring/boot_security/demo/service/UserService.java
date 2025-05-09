@@ -30,6 +30,8 @@ public interface UserService {
     @Transactional(readOnly = true)
     Optional<User> findByEmail(String email);
 
+    Optional<User> findById(Long id);
+
     Collection<? extends GrantedAuthority> mapRolesToAuthorities(Collection<Role> roles);
 
 }

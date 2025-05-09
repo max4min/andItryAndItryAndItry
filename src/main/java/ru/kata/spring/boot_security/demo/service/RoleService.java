@@ -2,8 +2,10 @@ package ru.kata.spring.boot_security.demo.service;
 
 import ru.kata.spring.boot_security.demo.models.Role;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface RoleService {
     List<Role> findAll();
@@ -15,4 +17,7 @@ public interface RoleService {
     Optional<Role> findByName(String name);
 
     List<Role> findRolesByNameIn(List<String> roleNames);
-}
+
+    public Set<Role> findRolesByIds(List<Long> ids);
+    }
+

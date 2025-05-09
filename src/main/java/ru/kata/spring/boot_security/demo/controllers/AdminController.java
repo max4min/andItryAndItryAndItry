@@ -3,14 +3,19 @@ package ru.kata.spring.boot_security.demo.controllers;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import ru.kata.spring.boot_security.demo.models.Role;
 import ru.kata.spring.boot_security.demo.models.User;
+import ru.kata.spring.boot_security.demo.models.UserDto;
 import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
@@ -114,5 +119,90 @@ public class AdminController {
     public String deleteUser(@PathVariable("id") Long id) {
         userService.deleteUser(id);
         return "redirect:/admin";
+    }
+
+
+
+// отладка ниже. Настраиваем JSON
+@PostMapping(value = "/users/api", consumes = MediaType.APPLICATION_JSON_VALUE)
+public ResponseEntity<?> createUserApi(@RequestBody @Valid UserDto userDto,
+                                       BindingResult bindingResult) {
+    if (bindingResult.hasErrors()) {
+        return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
+    }
+
+    try {
+        // Получаем роли по ID
+        Set<Role> roles = roleService.findRolesByIds(userDto.getRoleIds());
+        if (roles.isEmpty()) {
+            return ResponseEntity.badRequest().body("At least one valid role ID must be provided");
+        }
+
+        // Создаём пользователя
+        User user = new User();
+        user.setUsername(userDto.getUsername());
+        user.setFirstName(userDto.getFirstName());
+        user.setLastName(userDto.getLastName());
+        user.setEmail(userDto.getEmail());
+        user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        user.setRoles(roles);
+
+        userService.saveUser(user);
+        return ResponseEntity.ok("User created successfully!");
+    } catch (Exception e) {
+        return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
+    }
+}
+
+    @GetMapping(value = "/users/api", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<User>> getAllUsersApi() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    @DeleteMapping("/users/api/{id}")
+    public ResponseEntity<String> deleteUserApi(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok("User deleted");
+    }
+    @PutMapping("/users/api/{id}")
+    public ResponseEntity<?> updateUserApi(
+            @PathVariable Long id,
+            @RequestBody @Valid UserDto userDto,
+            BindingResult bindingResult) {
+
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
+        }
+
+        try {
+            User user = userService.findById(id).orElseThrow();
+
+            // Обновляем данные
+            user.setUsername(userDto.getUsername());
+            user.setFirstName(userDto.getFirstName());
+            user.setLastName(userDto.getLastName());
+            user.setEmail(userDto.getEmail());
+
+            // Обновляем пароль (если он был изменен)
+            if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
+                user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+            }
+
+            // Обновляем роли
+            Set<Role> roles = roleService.findRolesByIds(userDto.getRoleIds());
+            user.setRoles(roles);
+
+            userService.updateUser(user);
+            return ResponseEntity.ok("User updated successfully!");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/users/api/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        User user = userService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        return ResponseEntity.ok(user);
     }
 }
