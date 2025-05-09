@@ -123,7 +123,7 @@ public class AdminController {
 
 
 
-// отладка ниже. Настраиваем JSON
+// Отладка ниже. Настраиваем JSON
 @PostMapping(value = "/users/api", consumes = MediaType.APPLICATION_JSON_VALUE)
 public ResponseEntity<?> createUserApi(@RequestBody @Valid UserDto userDto,
                                        BindingResult bindingResult) {
