@@ -12,11 +12,13 @@ public interface RoleService {
 
     void save(Role role);
 
-    Optional<Role> findById(Long id);
+    public Role findById(Long id);
 
     Optional<Role> findByName(String name);
 
     List<Role> findRolesByNameIn(List<String> roleNames);
+
+    public Role findRoleById(Long id);
 
     public Set<Role> findRolesByIds(List<Long> ids);
     }

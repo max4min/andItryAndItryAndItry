@@ -64,7 +64,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void saveUser(User user) {
+    @Transactional
+    public User saveUser(User user) {
         if (user.getUsername() == null || user.getUsername().isEmpty()) {
             throw new IllegalArgumentException("Username cannot be empty");
         }
@@ -84,9 +85,7 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userRepository.save(user);
-
-        logger.info("User saved successfully: {}", user);
+        return userRepository.save(user);
     }
 
     @Override

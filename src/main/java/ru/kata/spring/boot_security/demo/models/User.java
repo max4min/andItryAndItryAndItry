@@ -25,7 +25,7 @@ public class User {
 
     @Column(name = "password", nullable = false)
     @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters long")
+    @Size(min = 6, message = "Password must be at least 6 characters long")
     private String password;
 
     @Column(name = "first_name")
@@ -46,7 +46,7 @@ public class User {
     private String email;
 
     // Many-to-many relationship with Role
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinTable(
             name = "users_roles",
             joinColumns = @JoinColumn(name = "user_id"),

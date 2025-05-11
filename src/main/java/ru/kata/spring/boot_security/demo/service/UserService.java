@@ -19,7 +19,8 @@ public interface UserService {
     @Transactional(readOnly = true)
     User getUserByEmail(String email);
 
-    void saveUser(User user);
+    @Transactional
+    User saveUser(User user);
 
     void deleteUser(Long id);
 

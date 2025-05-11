@@ -107,18 +107,26 @@ public class AdminController {
 
     @PostMapping("/add")
     public String addUser(@Valid @ModelAttribute("newUser") User user,
+                          @RequestParam(required = false) List<Long> roleIds,  // Принимаем ID ролей
                           BindingResult bindingResult,
-                          Model model) {
-
+                          Model model
+    ) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("users", userService.getAllUsers());
             return "admin-panel";
         }
 
+        if (roleIds != null) {
+            Set<Role> roles = roleIds.stream()
+                    .map(roleService::findById)  // Находим Role по ID
+                    .collect(Collectors.toSet());
+            user.setRoles(roles);
+        }
+
         try {
             userService.saveUser(user);
         } catch (DataIntegrityViolationException e) {
-            bindingResult.rejectValue("username", "user.exists", "Username already exists");
+            bindingResult.rejectValue("username", "user.exists", "Username уже существует");
             model.addAttribute("users", userService.getAllUsers());
             return "admin-panel";
         }
@@ -130,6 +138,7 @@ public class AdminController {
     public String updateUser(@ModelAttribute("user") @Valid User user,
                              BindingResult bindingResult,
                              @RequestParam("selectedRoles") List<String> roleNames) {
+        logger.error("VALIDATION ERRORS: {}", bindingResult.getAllErrors());
         if (bindingResult.hasErrors()) {
             return "admin-panel";
         }
