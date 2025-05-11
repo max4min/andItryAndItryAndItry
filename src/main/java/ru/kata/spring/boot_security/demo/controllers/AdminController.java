@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ru.kata.spring.boot_security.demo.models.Role;
 import ru.kata.spring.boot_security.demo.models.User;
 import ru.kata.spring.boot_security.demo.service.RoleService;
@@ -104,7 +105,6 @@ public class AdminController {
     }
 
 
-
     @PostMapping("/add")
     public String addUser(@Valid @ModelAttribute("newUser") User user,
                           @RequestParam(required = false) List<Long> roleIds,  // Принимаем ID ролей
@@ -135,106 +135,50 @@ public class AdminController {
     }
 
     @PostMapping("/update")
-    public String updateUser(@ModelAttribute("user") @Valid User user,
-                             BindingResult bindingResult,
-                             @RequestParam("selectedRoles") List<String> roleNames) {
-        logger.error("VALIDATION ERRORS: {}", bindingResult.getAllErrors());
-        if (bindingResult.hasErrors()) {
-            return "admin-panel";
+    public String updateUser(
+            @RequestParam Long id,
+            @RequestParam String username,
+            @RequestParam(required = false) String password,
+            @RequestParam String firstname,
+            @RequestParam String lastname,
+            @RequestParam int age,
+            @RequestParam String email,
+            @RequestParam List<Long> roleIds,
+            RedirectAttributes redirectAttributes) {
+
+        // Получаем пользователя с обработкой ошибки
+        User user = userService.findById(id);
+        if (user == null) {
+            redirectAttributes.addFlashAttribute("error", "User not found");
+            return "redirect:/admin";
         }
-        Set<Role> roles = new HashSet<>(roleService.findRolesByNameIn(roleNames));
+
+        // 2. Обновляем данные
+        user.setUsername(username);
+        user.setFirstName(firstname);
+        user.setLastName(lastname);
+        user.setAge(age);
+        user.setEmail(email);
+
+        // 3. Обновляем пароль (если указан)
+        if (password != null && !password.isEmpty()) {
+            user.setPassword(passwordEncoder.encode(password));
+        }
+
+        // 4. Обрабатываем роли
+        Set<Role> roles = new HashSet<>();
+        for (Long roleId : roleIds) {
+            Role role = roleService.findById(roleId);
+            if (role != null) {
+                roles.add(role);
+            }
+        }
         user.setRoles(roles);
+
+        // 5. Сохраняем изменения
         userService.updateUser(user);
+
+        redirectAttributes.addFlashAttribute("success", "User updated successfully");
         return "redirect:/admin";
     }
-
-    @PostMapping("/delete/{id}")
-    public String deleteUser(@PathVariable("id") Long id) {
-        userService.deleteUser(id);
-        return "redirect:/admin";
-    }
-
-
-// Отладка ниже. Настраиваем JSON
-//@PostMapping(value = "/users/api", consumes = MediaType.APPLICATION_JSON_VALUE)
-//public ResponseEntity<?> createUserApi(@RequestBody @Valid UserDto userDto,
-//                                       BindingResult bindingResult) {
-//    if (bindingResult.hasErrors()) {
-//        return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
-//    }
-//
-//    try {
-//        // Получаем роли по ID
-//        Set<Role> roles = roleService.findRolesByIds(userDto.getRoleIds());
-//        if (roles.isEmpty()) {
-//            return ResponseEntity.badRequest().body("At least one valid role ID must be provided");
-//        }
-//
-//        // Создаём пользователя
-//        User user = new User();
-//        user.setUsername(userDto.getUsername());
-//        user.setFirstName(userDto.getFirstName());
-//        user.setLastName(userDto.getLastName());
-//        user.setEmail(userDto.getEmail());
-//        user.setPassword(passwordEncoder.encode(userDto.getPassword()));
-//        user.setRoles(roles);
-//
-//        userService.saveUser(user);
-//        return ResponseEntity.ok("User created successfully!");
-//    } catch (Exception e) {
-//        return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
-//    }
-//}
-//
-//    @GetMapping(value = "/users/api", produces = MediaType.APPLICATION_JSON_VALUE)
-//    public ResponseEntity<List<User>> getAllUsersApi() {
-//        return ResponseEntity.ok(userService.getAllUsers());
-//    }
-//
-//    @DeleteMapping("/users/api/{id}")
-//    public ResponseEntity<String> deleteUserApi(@PathVariable Long id) {
-//        userService.deleteUser(id);
-//        return ResponseEntity.ok("User deleted");
-//    }
-//    @PutMapping("/users/api/{id}")
-//    public ResponseEntity<?> updateUserApi(
-//            @PathVariable Long id,
-//            @RequestBody @Valid UserDto userDto,
-//            BindingResult bindingResult) {
-//
-//        if (bindingResult.hasErrors()) {
-//            return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
-//        }
-//
-//        try {
-//            User user = userService.findById(id).orElseThrow();
-//
-//            // Обновляем данные
-//            user.setUsername(userDto.getUsername());
-//            user.setFirstName(userDto.getFirstName());
-//            user.setLastName(userDto.getLastName());
-//            user.setEmail(userDto.getEmail());
-//
-//            // Обновляем пароль (если он был изменен)
-//            if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
-//                user.setPassword(passwordEncoder.encode(userDto.getPassword()));
-//            }
-//
-//            // Обновляем роли
-//            Set<Role> roles = roleService.findRolesByIds(userDto.getRoleIds());
-//            user.setRoles(roles);
-//
-//            userService.updateUser(user);
-//            return ResponseEntity.ok("User updated successfully!");
-//        } catch (Exception e) {
-//            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
-//        }
-//    }
-//
-//    @GetMapping("/users/api/{id}")
-//    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-//        User user = userService.findById(id)
-//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-//        return ResponseEntity.ok(user);
-//    }
 }
