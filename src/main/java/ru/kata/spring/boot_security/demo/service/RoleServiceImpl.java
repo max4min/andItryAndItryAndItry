@@ -69,4 +69,9 @@ public class RoleServiceImpl implements RoleService {
         return new HashSet<>(roleRepository.findAllById(ids));
     }
 
+    @Override
+    public Set<Role> findAllByIds(List<Long> ids) {
+        return new HashSet<>(roleRepository.findAllById(ids));
+    }
+
 }

@@ -1,5 +1,6 @@
 package ru.kata.spring.boot_security.demo.controllers;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +17,7 @@ import ru.kata.spring.boot_security.demo.models.User;
 import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -45,7 +43,6 @@ public class AdminController {
         model.addAttribute("users", userService.getAllUsers());
         model.addAttribute("allRoles", roleService.findAll());
         model.addAttribute("newUser", new User());
-        System.out.println("Роли из БД: " + roleService.findAll()); // отладка 167 строки
         return "admin-panel";
     }
 
@@ -136,49 +133,58 @@ public class AdminController {
 
     @PostMapping("/update")
     public String updateUser(
+
             @RequestParam Long id,
             @RequestParam String username,
             @RequestParam(required = false) String password,
-            @RequestParam String firstname,
-            @RequestParam String lastname,
+            @RequestParam String firstName,
+            @RequestParam String lastName,
             @RequestParam int age,
             @RequestParam String email,
             @RequestParam List<Long> roleIds,
             RedirectAttributes redirectAttributes) {
 
-        // Получаем пользователя с обработкой ошибки
-        User user = userService.findById(id);
-        if (user == null) {
-            redirectAttributes.addFlashAttribute("error", "User not found");
-            return "redirect:/admin";
-        }
+        try {
+            logger.debug("Starting user update for ID: {}", id);
 
-        // 2. Обновляем данные
-        user.setUsername(username);
-        user.setFirstName(firstname);
-        user.setLastName(lastname);
-        user.setAge(age);
-        user.setEmail(email);
+            User user = userService.findById(id);
 
-        // 3. Обновляем пароль (если указан)
-        if (password != null && !password.isEmpty()) {
-            user.setPassword(passwordEncoder.encode(password));
-        }
+            // Логирование полученных данных
+            logger.debug("Updating user: {}", user);
+            logger.debug("Roles IDs received: {}", roleIds);
 
-        // 4. Обрабатываем роли
-        Set<Role> roles = new HashSet<>();
-        for (Long roleId : roleIds) {
-            Role role = roleService.findById(roleId);
-            if (role != null) {
-                roles.add(role);
+            // Обновление данных
+            user.setUsername(username);
+            user.setFirstName(firstName);
+            user.setLastName(lastName);
+            user.setAge(age);
+            user.setEmail(email);
+
+            if (password != null && !password.isEmpty()) {
+                user.setPassword(passwordEncoder.encode(password));
             }
+
+            Set<Role> roles = roleService.findAllByIds(roleIds);
+            user.setRoles(roles);
+
+            userService.updateUser(user);
+
+            logger.info("User updated successfully: {}", user.getId());
+            redirectAttributes.addFlashAttribute("success", "User updated successfully");
+
+        } catch (Exception e) {
+            logger.error("Error updating user", e);
+            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
+
+            // Для отладки - сохраняем ввод пользователя
+            redirectAttributes.addFlashAttribute("userInput", Map.of(
+                    "id", id,
+                    "username", username,
+                    "email", email,
+                    "roleIds", roleIds
+            ));
         }
-        user.setRoles(roles);
 
-        // 5. Сохраняем изменения
-        userService.updateUser(user);
-
-        redirectAttributes.addFlashAttribute("success", "User updated successfully");
         return "redirect:/admin";
     }
 }

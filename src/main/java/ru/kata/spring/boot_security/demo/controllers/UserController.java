@@ -33,9 +33,9 @@ public class UserController {
         return "user";
     }
 
-    @GetMapping("/{id}")
-    public String showUser() {
-        return "user";
-    }
+//    @GetMapping("/{id}")
+//    public String showUser() {
+//        return "user";
+//    }
 
 }

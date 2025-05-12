@@ -83,7 +83,8 @@
                         <td th:text="${user.username}"></td>
                         <td th:text="${user.age}"></td>
                         <td>
-                            <span th:each="role : ${user.role}" th:text="${role.authority.replace('ROLE_', '') + ' '}"></span>
+                            <span th:each="role : ${user.roles}"
+                                  th:text="${role.name.replace('ROLE_', '') + ' '}"></span>
                         </td>
                     </tr>
                     </tbody>

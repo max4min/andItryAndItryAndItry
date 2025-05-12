@@ -23,5 +23,7 @@ public interface RoleService {
     public Set<Role> findRolesByIds(List<Long> ids);
 
     Set<Role> findRolesByIdIn(List<Long> ids);
+
+    public Set<Role> findAllByIds (List<Long> ids);
     }
 
