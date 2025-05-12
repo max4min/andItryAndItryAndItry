@@ -24,14 +24,16 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
+    private final RoleService roleService;
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     public UserServiceImpl(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
-                           RoleRepository roleRepository) {
+                           RoleRepository roleRepository, RoleService roleService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
+        this.roleService = roleService;
     }
 
     @Override
@@ -49,17 +51,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .map(user -> {
-                    Hibernate.initialize(user.getRoles());
-                    return user;
-                })
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
@@ -129,6 +120,25 @@ public class UserServiceImpl implements UserService {
         return roles.stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void createUserWithRoles(User user, List<String> roleNames) {
+        if (roleNames == null || roleNames.isEmpty()) {
+            throw new IllegalArgumentException("At least one role must be selected");
+        }
+        Set<Role> roles = resolveRoles(roleNames);
+        user.setRoles(roles);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        userRepository.save(user);
+    }
+
+    private Set<Role> resolveRoles(List<String> roleNames) {
+        return roleNames.stream()
+                .map(roleService::findByName)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toSet());
     }
 
     @Override

@@ -1,6 +1,5 @@
 package ru.kata.spring.boot_security.demo.controllers;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +53,7 @@ public class AdminController {
     }
 
     @GetMapping("/user")
-    public String getPage() {
+    public String getUserPage() {
         return "user";
     }
 
@@ -72,32 +71,17 @@ public class AdminController {
             model.addAttribute("allRoles", roleService.findAll());
             return "admin-panel";
         }
+
         try {
-            if (roleNames == null || roleNames.isEmpty()) {
-                throw new IllegalArgumentException("At least one role must be selected");
-            }
-            Set<Role> roles = roleNames.stream()
-                    .map(roleService::findByName)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toSet());
-            if (roles.isEmpty()) {
-                throw new IllegalArgumentException("No valid roles selected");
-            }
-            user.setRoles(roles);
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            userService.createUserWithRoles(user, roleNames);
+            return "redirect:/admin";  // ← Успех!
 
-            logger.info("Saving user with roles: {}", roles);
-
-            userService.saveUser(user);
-            return "redirect:/admin";
-
-        } catch (Exception e) {
-            logger.error("Error creating user", e);
+        } catch (IllegalArgumentException e) {
+            logger.error("Error creating user: {}", e.getMessage());
             model.addAttribute("error", e.getMessage());
             model.addAttribute("users", userService.getAllUsers());
             model.addAttribute("allRoles", roleService.findAll());
-            return "admin-panel";
+            return "admin-panel";  // ← Ошибка валидации ролей
         }
     }
 
