@@ -11,10 +11,10 @@ import ru.kata.spring.boot_security.demo.repository.UserRepository;
 @EnableJpaRepositories(basePackageClasses = UserRepository.class)
 @SpringBootApplication
 @EnableTransactionManagement
-public class JMU_NA_START {
+public class SpringSecurityApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(JMU_NA_START.class, args);
+        SpringApplication.run(SpringSecurityApplication.class, args);
     }
 
 }

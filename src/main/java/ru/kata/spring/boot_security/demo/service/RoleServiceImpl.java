@@ -1,12 +1,15 @@
 package ru.kata.spring.boot_security.demo.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.kata.spring.boot_security.demo.models.Role;
 import ru.kata.spring.boot_security.demo.repository.RoleRepository;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,8 +36,11 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Role> findById(Long id) {
-        return roleRepository.findById(id);
+    public Role findById(Long id) {
+
+        return roleRepository.findById(id).orElseThrow(
+                ()-> new EntityNotFoundException("Role with id " + id + " not found")
+        );
     }
 
     @Override
@@ -47,4 +53,25 @@ public class RoleServiceImpl implements RoleService {
     public List<Role> findRolesByNameIn(List<String> roleNames) {
         return roleRepository.findByNameIn(roleNames);
     }
+
+    @Override
+    public Role findRoleById(Long id) {
+        return roleRepository.findById(id).orElseThrow(() -> new RuntimeException("Role not found"));
+    }
+
+    @Override
+    public Set<Role> findRolesByIds(List<Long> ids) {
+        return new HashSet<>(roleRepository.findAllById(ids));
+    }
+
+    @Override
+    public Set<Role> findRolesByIdIn(List<Long> ids) {
+        return new HashSet<>(roleRepository.findAllById(ids));
+    }
+
+    @Override
+    public Set<Role> findAllByIds(List<Long> ids) {
+        return new HashSet<>(roleRepository.findAllById(ids));
+    }
+
 }

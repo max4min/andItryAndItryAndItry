@@ -23,13 +23,13 @@ public class WebSecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
-                        .loginPage("/login")
-                        .loginProcessingUrl("/process_login")
-                        .usernameParameter("email")
-                        .successHandler(new SuccessUserHandler())
+                                .loginPage("/login")
+                                .loginProcessingUrl("/process_login")
+                                .usernameParameter("email")
+                                .successHandler(new SuccessUserHandler())
 //                        .defaultSuccessUrl("/user", true)
-                        .failureUrl("/login?error")
-                        .permitAll()
+                                .failureUrl("/login?error")
+                                .permitAll()
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
@@ -58,5 +58,3 @@ public class WebSecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-
-
